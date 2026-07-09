@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>青白江冷链信息管理平台</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa, #e4edf5);
+            color: #333;
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 15px;
+        }
+        
+        .sidebar-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        
+        .sidebar-subtitle {
+            font-size: 14px;
+            opacity: 0.8;
+            text-align: center;
+        }
+        
+        .nav-section {
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            padding: 10px 20px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.7;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .nav-item {
+            padding: 14px 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            font-size: 15px;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-item i {
+            margin-right: 12px;
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+            border-left: 3px solid rgba(255,255,255,0.5);
+        }
+        
+        .nav-item.active {
+            background: rgba(255,255,255,0.2);
+            border-left: 3px solid #fff;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        .current-date {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+        }
+        
+        .info-card.hazard::before {
+            background: linear-gradient(to bottom, #e74c3c, #c0392b);
+        }
+        
+        .info-card.expiring::before {
+            background: linear-gradient(to bottom, #f39c12, #d35400);
+        }
+        
+        .info-card.warning::before {
+            background: linear-gradient(to bottom, #9b59b6, #8e44ad);
+        }
+        
+        .info-card.storage::before {
+            background: linear-gradient(to bottom, #3498db, #2980b9);
+        }
+        
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+        
+        .info-card.hazard .card-icon {
+            background: linear-gradient(135deg, #ffebee, #ffcdd2);
+            color: #c0392b;
+        }
+        
+        .info-card.expiring .card-icon {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            color: #f39c12;
+        }
+        
+        .info-card.warning .card-icon {
+            background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+            color: #8e44ad;
+        }
+        
+        .info-card.storage .card-icon {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            color: #2980b9;
+        }
+        
+        .card-content {
+            flex: 1;
+        }
+        
+        .card-title {
+            font-size: 15px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .card-value {
+            font-size: 26px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .card-warning {
+            color: #e74c3c;
+        }
+        
+        .card-normal {
+            color: #27ae60;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .panel.active {
+            display: block;
+        }
+        
+        .panel-title {
+            font-size: 18px;
+            color: #1e3c72;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        th, td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+            font-weight: bold;
+            color: #555;
+        }
+        
+        tr:hover {
+            background-color: #f0f7ff;
+        }
+        
+        .status-active {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .status-expiring {
+            color: #f39c12;
+            font-weight: bold;
+        }
+        
+        .status-overdue {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .form-group {
+            margin-bottom: 12px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: bold;
+            color: #555;
+            font-size: 13px;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        button {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-right: 6px;
+            margin-bottom: 4px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+        
+        .btn-edit {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+        
+        .btn-small {
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+        
+        .search-bar {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: border-color 0.3s;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 15px;
+            color: #666;
+            font-size: 12px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        }
+        
+        .edit-form {
+            display: none;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .edit-form.active {
+            display: block;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .form-col {
+            flex: 1;
+        }
+        
+        .data-table {
+            overflow-x: auto;
+        }
+        
+        .storage-info {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: #f0f0f0;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #666;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .warning-badge {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 8px;
+            display: inline-block;
+        }
+        
+        .inventory-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        
+        .inventory-actions button {
+            margin-bottom: 0;
+        }
+        
+        .tab-container {
+            display: flex;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 15px;
+        }
+        
+        .tab-button {
+            padding: 10px 20px;
+            background: #f0f0f0;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        
+        .tab-button.active {
+            background: #1e3c72;
+            color: white;
+        }
+        
+        .inventory-tab {
+            display: none;
+        }
+        
+        .inventory-tab.active {
+            display: block;
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            margin: 20px 0;
+        }
+        
+        .budget-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .budget-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .budget-card.used {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+        
+        .budget-card.remaining {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+        
+        .budget-card h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        
+        .budget-card .amount {
+            font-size: 28px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">冷链管理平台</div>
+            <div class="sidebar-subtitle">青白江专用</div>
+        </div>
+        
+        <div class="nav-section">
+            <div class="section-title">基础管理</div>
+            <div class="nav-item active" data-panel="dashboard">
+                <i>📊</i> 控制面板
+            </div>
+            <div class="nav-item" data-panel="equipment">
+                <i>⚙️</i> 特种设备管理
+            </div>
+            <div class="nav-item" data-panel="personnel">
+                <i>👥</i> 特种作业人员管理
+            </div>
+        </div>
+        
+        <div class="nav-section">
+            <div class="section-title">业务管理</div>
+            <div class="nav-item" data-panel="contract">
+                <i>📋</i> 合同管理
+            </div>
+            <div class="nav-item" data-panel="inspection">
+                <i>🔍</i> 安全检查记录
+            </div>
+        </div>
+        
+        <div class="nav-section">
+            <div class="section-title">预算管理</div>
+            <div class="nav-item" data-panel="production-budget">
+                <i>💰</i> 全年生产预算
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="container">
+            <header>
+                <h1>青白江冷链信息管理平台</h1>
+                <p class="subtitle">专业冷链设备与安全管理一体化平台</p>
+                <div class="current-date" id="current-date">2026年07月09日</div>
+            </header>
+            
+            <div id="dashboard-panel" class="panel active">
+                <h2 class="panel-title">系统概览</h2>
+                <div class="info-cards">
+                    <div class="info-card hazard">
+                        <div class="card-icon">
+                            <i>⚠️</i>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-title">安全隐患 <span class="warning-badge" id="hazard-badge">8项</span></div>
+                            <div class="card-value card-warning" id="hazard-count">8项</div>
+                        </div>
+                    </div>
+                    <div class="info-card expiring">
+                        <div class="card-icon">
+                            <i>📋</i>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-title">待换证人员 <span class="warning-badge" id="expiring-personnel-badge">5人</span></div>
+                            <div class="card-value card-warning" id="expiring-personnel-count">5人</div>
+                        </div>
+                    </div>
+                    <div class="info-card warning">
+                        <div class="card-icon">
+                            <i>🔔</i>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-title">临期预警 <span class="warning-badge" id="warning-badge">12项</span></div>
+                            <div class="card-value card-warning" id="warning-count">12项</div>
+                        </div>
+                    </div>
+                    <div class="info-card storage">
+                        <div class="card-icon">
+                            <i>💰</i>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-title">年度预算</div>
+                            <div class="card-value card-normal" id="budget-total">500万元</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <h2 class="panel-title">系统功能</h2>
+                    <p>欢迎使用青白江冷链信息管理平台，您可以使用左侧导航栏快速切换到不同的管理模块：</p>
+                    <ul style="margin: 10px 0 10px 20px;">
+                        <li>特种设备管理：管理制冷设备、保温设备等特种设备</li>
+                        <li>特种作业人员管理：管理持证上岗人员信息</li>
+                        <li>合同管理：跟踪客户服务合同状态</li>
+                        <li>安全检查记录：记录日常安全检查情况</li>
+                        <li>全年生产预算：管理年度生产预算分配与使用情况</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="equipment-panel" class="panel">
+                <h2 class="panel-title">特种设备管理</h2>
+                <div class="search-bar">
+                    <input type="text" class="search-input" placeholder="搜索设备编号、名称...">
+                    <button class="btn-small search-equipment">搜索</button>
+                </div>
+                <div class="data-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>设备编号</th>
+                            <th>设备名称</th>
+                            <th>设备类型</th>
+                            <th>状态</th>
+                            <th>检验日期</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="equipment-table-body">
+                        <!-- 表格内容由JavaScript生成 -->
+                    </tbody>
+                </table>
+                </div>
+                
+                <div id="equipment-edit-form" class="edit-form">
+                    <h3>编辑设备信息</h3>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>设备编号</label>
+                            <input type="text" id="edit-equipment-id" readonly>
+                        </div>
+                        <div class="form-col">
+                            <label>设备名称</label>
+                            <input type="text" id="edit-equipment-name">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>设备类型</label>
+                            <select id="edit-equipment-type">
+                                <option value="制冷设备">制冷设备</option>
+                                <option value="保温设备">保温设备</option>
+                                <option value="通风设备">通风设备</option>
+                                <option value="叉车">叉车</option>
+                                <option value="小客车">小客车</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label>检验日期</label>
+                            <input type="date" id="edit-equipment-date">
+                        </div>
+                    </div>
+                    <input type="file" id="edit-equipment-file" class="file-input">
+                    <button id="save-equipment-btn">保存更改</button>
+                    <button id="cancel-equipment-btn" class="btn-danger">取消</button>
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <h3>新增设备</h3>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>设备编号</label>
+                            <input type="text" id="new-equipment-id" placeholder="请输入设备编号">
+                        </div>
+                        <div class="form-col">
+                            <label>设备名称</label>
+                            <input type="text" id="new-equipment-name" placeholder="请输入设备名称">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>设备类型</label>
+                            <select id="new-equipment-type">
+                                <option value="制冷设备">制冷设备</option>
+                                <option value="保温设备">保温设备</option>
+                                <option value="通风设备">通风设备</option>
+                                <option value="叉车">叉车</option>
+                                <option value="小客车">小客车</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label>检验日期</label>
+                            <input type="date" id="new-equipment-date">
+                        </div>
+                    </div>
+                    <input type="file" id="new-equipment-file" class="file-input">
+                    <button id="add-equipment-btn">添加设备</button>
+                </div>
+            </div>
+            
+            <div id="personnel-panel" class="panel">
+                <h2 class="panel-title">特种作业人员管理</h2>
+                <div class="search-bar">
+                    <input type="text" class="search-input" placeholder="搜索姓名、证件号...">
+                    <button class="btn-small search-personnel">搜索</button>
+                </div>
+                <div class="data-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>工种</th>
+                            <th>证件号</th>
+                            <th>有效期</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="personnel-table-body">
+                        <!-- 表格内容由JavaScript生成 -->
+                    </tbody>
+                </table>
+                </div>
+                
+                <div id="personnel-edit-form" class="edit-form">
+                    <h3>编辑人员信息</h3>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>姓名</label>
+                            <input type="text" id="edit-personnel-name">
+                        </div>
+                        <div class="form-col">
+                            <label>工种</label>
+                            <select id="edit-personnel-job">
+                                <option value="制冷与空调设备运行操作作业">制冷与空调设备运行操作作业</option>
+                                <option value="制冷与空调设备安装维修操作作业">制冷与空调设备安装维修操作作业</option>
+                                <option value="低压电工证">低压电工证</option>
+                                <option value="高压电工证">高压电工证</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>证件号</label>
+                            <input type="text" id="edit-personnel-cert">
+                        </div>
+                        <div class="form-col">
+                            <label>有效期</label>
+                            <input type="date" id="edit-personnel-date">
+                        </div>
+                    </div>
+                    <input type="file" id="edit-personnel-file" class="file-input">
+                    <button id="save-personnel-btn">保存更改</button>
+                    <button id="cancel-personnel-btn" class="btn-danger">取消</button>
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <h3>新增人员</h3>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>姓名</label>
+                            <input type="text" id="new-personnel-name" placeholder="请输入姓名">
+                        </div>
+                        <div class="form-col">
+                            <label>工种</label>
+                            <select id="new-personnel-job">
+                                <option value="制冷与空调设备运行操作作业">制冷与空调设备运行操作作业</option>
+                                <option value="制冷与空调设备安装维修操作作业">制冷与空调设备安装维修操作作业</option>
+                                <option value="低压电工证">低压电工证</option>
+                                <option value="高压电工证">高压电工证</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>证件号</label>
+                            <input type="text" id="new-personnel-cert" placeholder="请输入证件号">
+                        </div>
+                        <div class="form-col">
+                            <label>有效期</label>
+                            <input type="date" id="new-personnel-date">
+                        </div>
+                    </div>
+                    <input type="file" id="new-personnel-file" class="file-input">
+                    <button id="add-personnel-btn">添加人员</button>
+                </div>
+            </div>
+            
+            <div id="contract-panel" class="panel">
+                <h2 class="panel-title">合同管理</h2>
+                <div class="search-bar">
+                    <input type="text" class="search-input" placeholder="搜索合同编号、客户名称...">
+                    <button class="btn-small search-contract">搜索</button>
+                </div>
+                <div class="data-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>合同编号</th>
+                            <th>客户名称</th>
+                            <th>服务类型</th>
+                            <th>合同金额</th>
+                            <th>签订日期</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contract-table-body">
+                        <!-- 表格内容由JavaScript生成 -->
+                    </tbody>
+                </table>
+                </div>
+                
+                <div id="contract-edit-form" class="edit-form">
+                    <h3>编辑合同信息</h3>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>合同编号</label>
+                            <input type="text" id="edit-contract-id" readonly>
+                        </div>
+                        <div class="form-col">
+                            <label>客户名称</label>
+                            <input type="text" id="edit-contract-client">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>服务类型</label>
+                            <select id="edit-contract-type">
+                                <option value="设备维护">设备维护</option>
+                                <option value="设备租赁">设备租赁</option>
+                                <option value="技术服务">技术服务</option>
+                                <option value="购买设备">购买设备</option>
+                                <option value="购买材料">购买材料</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label>合同金额</label>
+                            <input type="text" id="edit-contract-amount">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>签订日期</label>
+                            <input type="date" id="edit-contract-date">
+                        </div>
+                    </div>
+                    <input type="file" id="edit-contract-file">
+                    <button id="save-contract-btn">保存更改</button>
+                    <button id="cancel-contract-btn" class="btn-danger">取消</button>
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <h3>新增合同</h3>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>合同编号</label>
+                            <input type="text" id="new-contract-id" placeholder="请输入合同编号">
+                        </div>
+                        <div class="form-col">
+                            <label>客户名称</label>
+                            <input type="text" id="new-contract-client" placeholder="请输入客户名称">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>服务类型</label>
+                            <select id="new-contract-type">
+                                <option value="设备维护">设备维护</option>
+                                <option value="设备租赁">设备租赁</option>
+                                <option value="技术服务">技术服务</option>
+                                <option value="购买设备">购买设备</option>
+                                <option value="购买材料">购买材料</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label>合同金额</label>
+                            <input type="text" id="new-contract-amount" placeholder="请输入合同金额">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>签订日期</label>
+                            <input type="date" id="new-contract-date">
+                        </div>
+                    </div>
+                    <input type="file" id="new-contract-file">
+                    <button id="add-contract-btn">添加合同</button>
+                </div>
+            </div>
+            
+            <div id="inspection-panel" class="panel">
+                <h2 class="panel-title">安全检查记录</h2>
+                <div class="search-bar">
+                    <input type="text" class="search-input" placeholder="搜索检查编号、检查人员...">
+                    <button class="btn-small search-inspection">搜索</button>
+                </div>
+                <div class="data-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>检查编号</th>
+                            <th>检查日期</th>
+                            <th>检查人员</th>
+                            <th>检查区域</th>
+                            <th>隐患数量</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inspection-table-body">
+                        <!-- 表格内容由JavaScript生成 -->
+                    </tbody>
+                </table>
+                </div>
+                
+                <div id="inspection-edit-form" class="edit-form">
+                    <h3>编辑检查记录</h3>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>检查编号</label>
+                            <input type="text" id="edit-inspection-id" readonly>
+                        </div>
+                        <div class="form-col">
+                            <label>检查日期</label>
+                            <input type="date" id="edit-inspection-date">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>检查人员</label>
+                            <input type="text" id="edit-inspection-staff">
+                        </div>
+                        <div class="form-col">
+                            <label>检查区域</label>
+                            <select id="edit-inspection-area">
+                                <option value="高温机房">高温机房</option>
+                                <option value="低温机房">低温机房</option>
+                                <option value="高压配电箱">高压配电箱</option>
+                                <option value="1号冻库">1号冻库</option>
+                                <option value="2号冻库">2号冻库</option>
+                                <option value="3号冻库">3号冻库</option>
+                                <option value="4号冻库">4号冻库</option>
+                                <option value="1号仓库">1号仓库</option>
+                                <option value="2号仓库">2号仓库</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>隐患数量</label>
+                            <input type="number" id="edit-inspection-hazards">
+                        </div>
+                    </div>
+                    <input type="file" id="edit-inspection-file">
+                    <button id="save-inspection-btn">保存更改</button>
+                    <button id="cancel-inspection-btn" class="btn-danger">取消</button>
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <h3>新增检查记录</h3>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>检查编号</label>
+                            <input type="text" id="new-inspection-id" placeholder="请输入检查编号">
+                        </div>
+                        <div class="form-col">
+                            <label>检查日期</label>
+                            <input type="date" id="new-inspection-date">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>检查人员</label>
+                            <input type="text" id="new-inspection-staff" placeholder="请输入检查人员">
+                        </div>
+                        <div class="form-col">
+                            <label>检查区域</label>
+                            <select id="new-inspection-area">
+                                <option value="高温机房">高温机房</option>
+                                <option value="低温机房">低温机房</option>
+                                <option value="高压配电箱">高压配电箱</option>
+                                <option value="1号冻库">1号冻库</option>
+                                <option value="2号冻库">2号冻库</option>
+                                <option value="3号冻库">3号冻库</option>
+                                <option value="4号冻库">4号冻库</option>
+                                <option value="1号仓库">1号仓库</option>
+                                <option value="2号仓库">2号仓库</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>隐患数量</label>
+                            <input type="number" id="new-inspection-hazards" placeholder="请输入隐患数量">
+                        </div>
+                    </div>
+                    <input type="file" id="new-inspection-file">
+                    <button id="add-inspection-btn">添加记录</button>
+                </div>
+            </div>
+            
+            <!-- 全年生产预算面板 -->
+            <div id="production-budget-panel" class="panel">
+                <h2 class="panel-title">全年生产预算</h2>
+                
+                <!-- 预算概览卡片 -->
+                <div class="budget-summary">
+                    <div class="budget-card">
+                        <h3>年度总预算</h3>
+                        <div class="amount" id="total-budget">500万元</div>
+                    </div>
+                    <div class="budget-card used">
+                        <h3>已用预算</h3>
+                        <div class="amount" id="used-budget">320万元</div>
+                    </div>
+                    <div class="budget-card remaining">
+                        <h3>剩余预算</h3>
+                        <div class="amount" id="remaining-budget">180万元</div>
+                    </div>
+                </div>
+                
+                <!-- 饼状图 -->
+                <div id="budget-pie-chart" class="chart-container"></div>
+                
+                <div class="search-bar">
+                    <input type="text" class="search-input" id="budget-search-input" placeholder="搜索预算项目...">
+                    <button class="btn-small" id="search-budget-btn">搜索</button>
+                </div>
+                
+                <div class="data-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>项目编号</th>
+                            <th>项目名称</th>
+                            <th>预算类别</th>
+                            <th>预算金额(万元)</th>
+                            <th>已用金额(万元)</th>
+                            <th>执行率</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="budget-table-body">
+                        <!-- 表格内容由JavaScript生成 -->
+                    </tbody>
+                </table>
+                </div>
+                
+                <div id="budget-edit-form" class="edit-form">
+                    <h3>编辑预算项目</h3>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>项目编号</label>
+                            <input type="text" id="edit-budget-id" readonly>
+                        </div>
+                        <div class="form-col">
+                            <label>项目名称</label>
+                            <input type="text" id="edit-budget-name">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>预算类别</label>
+                            <select id="edit-budget-category">
+                                <option value="设备采购">设备采购</option>
+                                <option value="原材料">原材料</option>
+                                <option value="人工费用">人工费用</option>
+                                <option value="运营费用">运营费用</option>
+                                <option value="维护费用">维护费用</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label>预算金额(万元)</label>
+                            <input type="number" id="edit-budget-amount">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>已用金额(万元)</label>
+                            <input type="number" id="edit-budget-used">
+                        </div>
+                    </div>
+                    <button id="save-budget-btn">保存更改</button>
+                    <button id="cancel-budget-btn" class="btn-danger">取消</button>
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <h3>新增预算项目</h3>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>项目编号</label>
+                            <input type="text" id="new-budget-id" placeholder="请输入项目编号">
+                        </div>
+                        <div class="form-col">
+                            <label>项目名称</label>
+                            <input type="text" id="new-budget-name" placeholder="请输入项目名称">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>预算类别</label>
+                            <select id="new-budget-category">
+                                <option value="设备采购">设备采购</option>
+                                <option value="原材料">原材料</option>
+                                <option value="人工费用">人工费用</option>
+                                <option value="运营费用">运营费用</option>
+                                <option value="维护费用">维护费用</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label>预算金额(万元)</label>
+                            <input type="number" id="new-budget-amount" placeholder="请输入预算金额">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>已用金额(万元)</label>
+                            <input type="number" id="new-budget-used" placeholder="请输入已用金额">
+                        </div>
+                    </div>
+                    <button id="add-budget-btn">添加预算项目</button>
+                </div>
+            </div>
+            
+            <footer>
+                <p>青白江冷链信息管理平台 &copy; 2026 | 数据存储于本地浏览器</p>
+                <div id="storage-info">数据已加载</div>
+            </footer>
+        </div>
+    </div>
+    
+    <script>
+        // 数据存储键名
+        const EQUIPMENT_DATA_KEY = 'coldchain_equipment_data';
+        const PERSONNEL_DATA_KEY = 'coldchain_personnel_data';
+        const CONTRACT_DATA_KEY = 'coldchain_contract_data';
+        const INSPECTION_DATA_KEY = 'coldchain_inspection_data';
+        const BUDGET_DATA_KEY = 'coldchain_budget_data';
+
+        // 数据数组
+        let equipmentData = [];
+        let personnelData = [];
+        let contractData = [];
+        let inspectionData = [];
+        let budgetData = [];
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDataFromStorage();
+            bindNavigation();
+            bindEvents();
+            renderTables();
+            updateCurrentDate();
+            updateStorageInfo();
+        });
+
+        // 绑定导航
+        function bindNavigation() {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // 移除所有active类
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+                    
+                    // 添加active类
+                    this.classList.add('active');
+                    const panelId = this.getAttribute('data-panel') + '-panel';
+                    document.getElementById(panelId).classList.add('active');
+                    
+                    // 如果是预算面板，初始化饼状图
+                    if (panelId === 'production-budget-panel') {
+                        setTimeout(initBudgetPieChart, 100);
+                    }
+                });
+            });
+        }
+
+        // 初始化预算饼状图
+        function initBudgetPieChart() {
+            const chartDom = document.getElementById('budget-pie-chart');
+            if (!chartDom) return;
+            
+            const myChart = echarts.init(chartDom);
+            
+            // 按类别汇总预算数据
+            const categoryData = {};
+            budgetData.forEach(item => {
+                if (categoryData[item.category]) {
+                    categoryData[item.category] += item.amount;
+                } else {
+                    categoryData[item.category] = item.amount;
+                }
+            });
+            
+            const pieData = Object.keys(categoryData).map(key => ({
+                name: key,
+                value: categoryData[key]
+            }));
+            
+            const option = {
+                title: {
+                    text: '预算分配占比',
+                    left: 'center',
+                    textStyle: {
+                        fontSize: 18,
+                        fontWeight: 'bold',
+                        color: '#1e3c72'
+                    }
+                },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b}: {c}万元 ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left',
+                    top: 'middle'
+                },
+                series: [
+                    {
+                        name: '预算分配',
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        center: ['60%', '50%'],
+                        avoidLabelOverlap: false,
+                        itemStyle: {
+                            borderRadius: 10,
+                            borderColor: '#fff',
+                            borderWidth: 2
+                        },
+                        label: {
+                            show: true,
+                            formatter: '{b}\n{c}万元'
+                        },
+                        emphasis: {
+                            label: {
+                                show: true,
+                                fontSize: 16,
+                                fontWeight: 'bold'
+                            }
+                        },
+                        data: pieData.length > 0 ? pieData : [
+                            { value: 150, name: '设备采购' },
+                            { value: 100, name: '原材料' },
+                            { value: 80, name: '人工费用' },
+                            { value: 100, name: '运营费用' },
+                            { value: 50, name: '维护费用' },
+                            { value: 20, name: '其他' }
+                        ]
+                    }
+                ],
+                color: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272']
+            };
+            
+            myChart.setOption(option);
+            
+            // 响应式
+            window.addEventListener('resize', function() {
+                myChart.resize();
+            });
+        }
+
+        // 从localStorage加载数据
+        function loadDataFromStorage() {
+            try {
+                // 加载设备数据
+                const storedEquipment = localStorage.getItem(EQUIPMENT_DATA_KEY);
+                if (storedEquipment) {
+                    equipmentData = JSON.parse(storedEquipment);
+                } else {
+                    equipmentData = [
+                        { id: 1, code: 'SB-2023-001', name: '1号制冷机组', type: '制冷设备', status: '正常', date: '2024-12-31' },
+                        { id: 2, code: 'SB-2023-002', name: '2号制冷机组', type: '制冷设备', status: '正常', date: '2024-12-31' },
+                        { id: 3, code: 'SB-2023-003', name: '保温门A', type: '保温设备', status: '即将到期', date: '2024-01-15' },
+                        { id: 4, code: 'SB-2023-004', name: '叉车1号', type: '叉车', status: '正常', date: '2025-06-30' },
+                        { id: 5, code: 'SB-2023-005', name: '通风系统', type: '通风设备', status: '正常', date: '2024-08-31' }
+                    ];
+                }
+                
+                // 加载人员数据
+                const storedPersonnel = localStorage.getItem(PERSONNEL_DATA_KEY);
+                if (storedPersonnel) {
+                    personnelData = JSON.parse(storedPersonnel);
+                } else {
+                    personnelData = [
+                        { id: 1, name: '张三', job: '制冷与空调设备运行操作作业', cert: 'T510123199001011234', date: '2024-06-30', status: '即将到期' },
+                        { id: 2, name: '李四', job: '低压电工证', cert: 'T510123199002021234', date: '2025-03-31', status: '正常' },
+                        { id: 3, name: '王五', job: '制冷与空调设备安装维修操作作业', cert: 'T510123199003031234', date: '2024-12-31', status: '正常' },
+                        { id: 4, name: '赵六', job: '高压电工证', cert: 'T510123199004041234', date: '2024-02-28', status: '即将到期' },
+                        { id: 5, name: '钱七', job: '制冷与空调设备运行操作作业', cert: 'T510123199005051234', date: '2025-09-30', status: '正常' }
+                    ];
+                }
+                
+                // 加载合同数据
+                const storedContract = localStorage.getItem(CONTRACT_DATA_KEY);
+                if (storedContract) {
+                    contractData = JSON.parse(storedContract);
+                } else {
+                    contractData = [
+                        { id: 1, code: 'HT-2023-001', client: '成都食品公司', type: '设备维护', amount: '50,000元', date: '2024-03-31', status: '执行中' },
+                        { id: 2, code: 'HT-2023-002', client: '四川物流公司', type: '设备租赁', amount: '120,000元', date: '2024-01-31', status: '即将到期' },
+                        { id: 3, code: 'HT-2023-003', client: '重庆冷链企业', type: '技术服务', amount: '80,000元', date: '2024-06-30', status: '执行中' },
+                        { id: 4, code: 'HT-2023-004', client: '云南果蔬基地', type: '购买设备', amount: '200,000元', date: '2023-12-31', status: '已到期' },
+                        { id: 5, code: 'HT-2023-005', client: '贵州仓储中心', type: '购买材料', amount: '30,000元', date: '2024-09-30', status: '执行中' }
+                    ];
+                }
+                
+                // 加载检查记录数据
+                const storedInspection = localStorage.getItem(INSPECTION_DATA_KEY);
+                if (storedInspection) {
+                    inspectionData = JSON.parse(storedInspection);
+                } else {
+                    inspectionData = [
+                        { id: 1, code: 'JC-2023-001', date: '2023-12-01', staff: '张三', area: '1号冻库', hazards: 2, status: '整改中' },
+                        { id: 2, code: 'JC-2023-002', date: '2023-12-02', staff: '李四', area: '2号冻库', hazards: 0, status: '合格' },
+                        { id: 3, code: 'JC-2023-003', date: '2023-12-03', staff: '王五', area: '高温机房', hazards: 3, status: '整改中' },
+                        { id: 4,
