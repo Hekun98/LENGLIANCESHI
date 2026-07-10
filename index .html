@@ -1,0 +1,1754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>青白江冷链信息管理平台</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+    <style>
+        /* ===== 全局重置 & 布局 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa, #e4edf5);
+            color: #333;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ===== 侧边栏 ===== */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #fff;
+            padding: 20px 0;
+            box-shadow: 3px 0 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 15px;
+        }
+        .sidebar-title {
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+        }
+        .sidebar-subtitle {
+            font-size: 14px;
+            opacity: 0.8;
+            text-align: center;
+        }
+        .nav-section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            padding: 10px 20px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.7;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .nav-item {
+            padding: 14px 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            font-size: 15px;
+            border-left: 3px solid transparent;
+            user-select: none;
+        }
+        .nav-item i {
+            margin-right: 12px;
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-left-color: rgba(255, 255, 255, 0.5);
+        }
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-left-color: #fff;
+        }
+
+        /* ===== 主内容 ===== */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* ===== 头部 ===== */
+        header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        header h1 {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .current-date {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* ===== 信息卡片 ===== */
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .info-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+        }
+        .info-card.hazard::before {
+            background: linear-gradient(to bottom, #e74c3c, #c0392b);
+        }
+        .info-card.expiring::before {
+            background: linear-gradient(to bottom, #f39c12, #d35400);
+        }
+        .info-card.warning::before {
+            background: linear-gradient(to bottom, #9b59b6, #8e44ad);
+        }
+        .info-card.budget::before {
+            background: linear-gradient(to bottom, #27ae60, #1e8449);
+        }
+        .info-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        .card-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 26px;
+            flex-shrink: 0;
+        }
+        .info-card.hazard .card-icon {
+            background: linear-gradient(135deg, #ffebee, #ffcdd2);
+            color: #c0392b;
+        }
+        .info-card.expiring .card-icon {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            color: #f39c12;
+        }
+        .info-card.warning .card-icon {
+            background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+            color: #8e44ad;
+        }
+        .info-card.budget .card-icon {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            color: #1e8449;
+        }
+        .card-content {
+            flex: 1;
+        }
+        .card-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .card-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        .card-value.card-warning {
+            color: #e74c3c;
+        }
+        .card-value.card-normal {
+            color: #27ae60;
+        }
+
+        /* ===== 面板 ===== */
+        .panel {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 15px;
+            display: none;
+        }
+        .panel.active {
+            display: block;
+        }
+        .panel-title {
+            font-size: 18px;
+            color: #1e3c72;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #eee;
+        }
+
+        /* ===== 表格 ===== */
+        .data-table {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th,
+        td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+            font-weight: 700;
+            color: #555;
+        }
+        tr:hover {
+            background-color: #f0f7ff;
+        }
+
+        .status-active {
+            color: #27ae60;
+            font-weight: 700;
+        }
+        .status-expiring {
+            color: #f39c12;
+            font-weight: 700;
+        }
+        .status-overdue {
+            color: #e74c3c;
+            font-weight: 700;
+        }
+
+        /* ===== 表单 ===== */
+        .form-group {
+            margin-bottom: 12px;
+        }
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 700;
+            color: #555;
+            font-size: 13px;
+        }
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .form-col {
+            flex: 1;
+        }
+
+        /* ===== 按钮 ===== */
+        button {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #fff;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-right: 6px;
+            margin-bottom: 4px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+        .btn-edit {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #1e8449);
+        }
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        /* ===== 搜索栏 ===== */
+        .search-bar {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .search-input {
+            flex: 1;
+            min-width: 180px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: border-color 0.3s;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        .search-reset {
+            background: #95a5a6;
+        }
+        .search-reset:hover {
+            background: #7f8c8d;
+        }
+
+        /* ===== 编辑表单 ===== */
+        .edit-form {
+            display: none;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #e0e0e0;
+        }
+        .edit-form.active {
+            display: block;
+        }
+
+        /* ===== 警告徽章 ===== */
+        .warning-badge {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 6px;
+            display: inline-block;
+        }
+
+        /* ===== 预算特有 ===== */
+        .budget-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .budget-summary .info-card {
+            padding: 15px 20px;
+        }
+        .budget-summary .info-card .card-value {
+            font-size: 26px;
+        }
+        .chart-container {
+            position: relative;
+            height: 350px;
+            max-width: 600px;
+            margin: 0 auto 20px;
+        }
+        .budget-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 20px;
+            justify-content: center;
+            margin: 10px 0 15px;
+        }
+        .budget-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #333;
+        }
+        .budget-legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        .file-input {
+            display: none;
+        }
+
+        /* ===== 底部 ===== */
+        footer {
+            text-align: center;
+            padding: 15px;
+            color: #666;
+            font-size: 12px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ===== 存储状态 ===== */
+        .storage-info {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: #f0f0f0;
+            padding: 6px 14px;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #666;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 220px;
+            }
+            .main-content {
+                margin-left: 220px;
+            }
+            .form-row {
+                flex-direction: column;
+            }
+            .chart-container {
+                height: 260px;
+            }
+            .budget-summary {
+                grid-template-columns: 1fr 1fr;
+            }
+            .current-date {
+                position: static;
+                transform: none;
+                margin-top: 6px;
+            }
+            header h1 {
+                font-size: 20px;
+            }
+        }
+        @media (max-width: 500px) {
+            .sidebar {
+                width: 180px;
+                font-size: 13px;
+            }
+            .sidebar-title {
+                font-size: 17px;
+            }
+            .nav-item {
+                padding: 10px 15px;
+                font-size: 13px;
+            }
+            .main-content {
+                margin-left: 180px;
+                padding: 10px;
+            }
+            .info-cards {
+                grid-template-columns: 1fr 1fr;
+            }
+            .budget-summary {
+                grid-template-columns: 1fr;
+            }
+            .chart-container {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 侧边栏 ===== -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">冷链管理平台</div>
+            <div class="sidebar-subtitle">青白江专用</div>
+        </div>
+        <div class="nav-section">
+            <div class="section-title">基础管理</div>
+            <div class="nav-item active" data-panel="dashboard">📊 控制面板</div>
+            <div class="nav-item" data-panel="equipment">⚙️ 特种设备管理</div>
+            <div class="nav-item" data-panel="personnel">👥 特种作业人员管理</div>
+        </div>
+        <div class="nav-section">
+            <div class="section-title">业务管理</div>
+            <div class="nav-item" data-panel="contract">📋 合同管理</div>
+            <div class="nav-item" data-panel="inspection">🔍 安全检查记录</div>
+            <div class="nav-item" data-panel="budget">💰 全年生产预算</div>
+        </div>
+    </div>
+
+    <!-- ===== 主内容 ===== -->
+    <div class="main-content">
+        <div class="container">
+
+            <!-- 头部 -->
+            <header>
+                <h1>青白江冷链信息管理平台</h1>
+                <p class="subtitle">专业冷链设备与安全管理一体化平台</p>
+                <div class="current-date" id="current-date">2026年05月22日</div>
+            </header>
+
+            <!-- ========================================================== -->
+            <!-- 面板：控制面板 -->
+            <!-- ========================================================== -->
+            <div id="dashboard-panel" class="panel active">
+                <h2 class="panel-title">系统概览</h2>
+                <div class="info-cards">
+                    <div class="info-card hazard">
+                        <div class="card-icon">⚠️</div>
+                        <div class="card-content">
+                            <div class="card-title">安全隐患 <span class="warning-badge" id="hazard-badge">0项</span></div>
+                            <div class="card-value card-warning" id="hazard-count">0项</div>
+                        </div>
+                    </div>
+                    <div class="info-card expiring">
+                        <div class="card-icon">📋</div>
+                        <div class="card-content">
+                            <div class="card-title">待换证人员 <span class="warning-badge" id="expiring-personnel-badge">0人</span></div>
+                            <div class="card-value card-warning" id="expiring-personnel-count">0人</div>
+                        </div>
+                    </div>
+                    <div class="info-card warning">
+                        <div class="card-icon">🔔</div>
+                        <div class="card-content">
+                            <div class="card-title">临期预警 <span class="warning-badge" id="warning-badge">0项</span></div>
+                            <div class="card-value card-warning" id="warning-count">0项</div>
+                        </div>
+                    </div>
+                    <div class="info-card budget">
+                        <div class="card-icon">💰</div>
+                        <div class="card-content">
+                            <div class="card-title">年度预算总额</div>
+                            <div class="card-value card-normal" id="budget-total-card">¥0</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel" style="box-shadow:none;padding:0;background:transparent;">
+                    <h2 class="panel-title">系统功能</h2>
+                    <p>欢迎使用青白江冷链信息管理平台，您可以使用左侧导航栏快速切换管理模块：</p>
+                    <ul style="margin:10px 0 10px 20px;line-height:1.8;">
+                        <li><strong>特种设备管理</strong> — 制冷设备、保温设备等台账与检验状态</li>
+                        <li><strong>特种作业人员管理</strong> — 持证上岗人员信息与证件有效期</li>
+                        <li><strong>合同管理</strong> — 客户服务合同状态跟踪</li>
+                        <li><strong>安全检查记录</strong> — 日常安全检查与隐患登记</li>
+                        <li><strong>全年生产预算</strong> — 年度预算分配与执行率（饼状图可视化）</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 面板：特种设备管理 -->
+            <!-- ========================================================== -->
+            <div id="equipment-panel" class="panel">
+                <h2 class="panel-title">特种设备管理</h2>
+                <div class="search-bar">
+                    <input type="text" class="search-input" data-target="equipment" placeholder="搜索设备编号、名称..." />
+                    <button class="btn-small search-btn" data-target="equipment">搜索</button>
+                    <button class="btn-small search-reset" data-target="equipment">重置</button>
+                </div>
+                <div class="data-table">
+                    <table>
+                        <thead><tr><th>设备编号</th><th>设备名称</th><th>设备类型</th><th>状态</th><th>检验日期</th><th>操作</th></tr></thead>
+                        <tbody id="equipment-table-body"></tbody>
+                    </table>
+                </div>
+                <div id="equipment-edit-form" class="edit-form">
+                    <h3>编辑设备信息</h3>
+                    <div class="form-row">
+                        <div class="form-col"><label>设备编号</label><input type="text" id="edit-equipment-id" readonly /></div>
+                        <div class="form-col"><label>设备名称</label><input type="text" id="edit-equipment-name" /></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>设备类型</label>
+                            <select id="edit-equipment-type">
+                                <option value="制冷设备">制冷设备</option><option value="保温设备">保温设备</option>
+                                <option value="通风设备">通风设备</option><option value="叉车">叉车</option>
+                                <option value="小客车">小客车</option>
+                            </select>
+                        </div>
+                        <div class="form-col"><label>检验日期</label><input type="date" id="edit-equipment-date" /></div>
+                    </div>
+                    <button id="save-equipment-btn">保存更改</button>
+                    <button id="cancel-equipment-btn" class="btn-danger">取消</button>
+                </div>
+                <div style="margin-top:15px;">
+                    <h3>新增设备</h3>
+                    <div class="form-row">
+                        <div class="form-col"><label>设备编号</label><input type="text" id="new-equipment-id" placeholder="请输入设备编号" /></div>
+                        <div class="form-col"><label>设备名称</label><input type="text" id="new-equipment-name" placeholder="请输入设备名称" /></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>设备类型</label>
+                            <select id="new-equipment-type">
+                                <option value="制冷设备">制冷设备</option><option value="保温设备">保温设备</option>
+                                <option value="通风设备">通风设备</option><option value="叉车">叉车</option>
+                                <option value="小客车">小客车</option>
+                            </select>
+                        </div>
+                        <div class="form-col"><label>检验日期</label><input type="date" id="new-equipment-date" /></div>
+                    </div>
+                    <button id="add-equipment-btn" class="btn-success">添加设备</button>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 面板：特种作业人员管理 -->
+            <!-- ========================================================== -->
+            <div id="personnel-panel" class="panel">
+                <h2 class="panel-title">特种作业人员管理</h2>
+                <div class="search-bar">
+                    <input type="text" class="search-input" data-target="personnel" placeholder="搜索姓名、证件号..." />
+                    <button class="btn-small search-btn" data-target="personnel">搜索</button>
+                    <button class="btn-small search-reset" data-target="personnel">重置</button>
+                </div>
+                <div class="data-table">
+                    <table>
+                        <thead><tr><th>姓名</th><th>工种</th><th>证件号</th><th>有效期</th><th>状态</th><th>操作</th></tr></thead>
+                        <tbody id="personnel-table-body"></tbody>
+                    </table>
+                </div>
+                <div id="personnel-edit-form" class="edit-form">
+                    <h3>编辑人员信息</h3>
+                    <div class="form-row">
+                        <div class="form-col"><label>姓名</label><input type="text" id="edit-personnel-name" /></div>
+                        <div class="form-col">
+                            <label>工种</label>
+                            <select id="edit-personnel-job">
+                                <option value="制冷与空调设备运行操作作业">制冷与空调设备运行操作作业</option>
+                                <option value="制冷与空调设备安装维修操作作业">制冷与空调设备安装维修操作作业</option>
+                                <option value="低压电工证">低压电工证</option>
+                                <option value="高压电工证">高压电工证</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col"><label>证件号</label><input type="text" id="edit-personnel-cert" /></div>
+                        <div class="form-col"><label>有效期</label><input type="date" id="edit-personnel-date" /></div>
+                    </div>
+                    <button id="save-personnel-btn">保存更改</button>
+                    <button id="cancel-personnel-btn" class="btn-danger">取消</button>
+                </div>
+                <div style="margin-top:15px;">
+                    <h3>新增人员</h3>
+                    <div class="form-row">
+                        <div class="form-col"><label>姓名</label><input type="text" id="new-personnel-name" placeholder="请输入姓名" /></div>
+                        <div class="form-col">
+                            <label>工种</label>
+                            <select id="new-personnel-job">
+                                <option value="制冷与空调设备运行操作作业">制冷与空调设备运行操作作业</option>
+                                <option value="制冷与空调设备安装维修操作作业">制冷与空调设备安装维修操作作业</option>
+                                <option value="低压电工证">低压电工证</option>
+                                <option value="高压电工证">高压电工证</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col"><label>证件号</label><input type="text" id="new-personnel-cert" placeholder="请输入证件号" /></div>
+                        <div class="form-col"><label>有效期</label><input type="date" id="new-personnel-date" /></div>
+                    </div>
+                    <button id="add-personnel-btn" class="btn-success">添加人员</button>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 面板：合同管理 -->
+            <!-- ========================================================== -->
+            <div id="contract-panel" class="panel">
+                <h2 class="panel-title">合同管理</h2>
+                <div class="search-bar">
+                    <input type="text" class="search-input" data-target="contract" placeholder="搜索合同编号、客户名称..." />
+                    <button class="btn-small search-btn" data-target="contract">搜索</button>
+                    <button class="btn-small search-reset" data-target="contract">重置</button>
+                </div>
+                <div class="data-table">
+                    <table>
+                        <thead><tr><th>合同编号</th><th>客户名称</th><th>服务类型</th><th>合同金额</th><th>签订日期</th><th>状态</th><th>操作</th></tr></thead>
+                        <tbody id="contract-table-body"></tbody>
+                    </table>
+                </div>
+                <div id="contract-edit-form" class="edit-form">
+                    <h3>编辑合同信息</h3>
+                    <div class="form-row">
+                        <div class="form-col"><label>合同编号</label><input type="text" id="edit-contract-id" readonly /></div>
+                        <div class="form-col"><label>客户名称</label><input type="text" id="edit-contract-client" /></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>服务类型</label>
+                            <select id="edit-contract-type">
+                                <option value="设备维护">设备维护</option><option value="设备租赁">设备租赁</option>
+                                <option value="技术服务">技术服务</option><option value="购买设备">购买设备</option>
+                                <option value="购买材料">购买材料</option>
+                            </select>
+                        </div>
+                        <div class="form-col"><label>合同金额</label><input type="text" id="edit-contract-amount" /></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col"><label>签订日期</label><input type="date" id="edit-contract-date" /></div>
+                    </div>
+                    <button id="save-contract-btn">保存更改</button>
+                    <button id="cancel-contract-btn" class="btn-danger">取消</button>
+                </div>
+                <div style="margin-top:15px;">
+                    <h3>新增合同</h3>
+                    <div class="form-row">
+                        <div class="form-col"><label>合同编号</label><input type="text" id="new-contract-id" placeholder="请输入合同编号" /></div>
+                        <div class="form-col"><label>客户名称</label><input type="text" id="new-contract-client" placeholder="请输入客户名称" /></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>服务类型</label>
+                            <select id="new-contract-type">
+                                <option value="设备维护">设备维护</option><option value="设备租赁">设备租赁</option>
+                                <option value="技术服务">技术服务</option><option value="购买设备">购买设备</option>
+                                <option value="购买材料">购买材料</option>
+                            </select>
+                        </div>
+                        <div class="form-col"><label>合同金额</label><input type="text" id="new-contract-amount" placeholder="请输入合同金额" /></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col"><label>签订日期</label><input type="date" id="new-contract-date" /></div>
+                    </div>
+                    <button id="add-contract-btn" class="btn-success">添加合同</button>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 面板：安全检查记录 -->
+            <!-- ========================================================== -->
+            <div id="inspection-panel" class="panel">
+                <h2 class="panel-title">安全检查记录</h2>
+                <div class="search-bar">
+                    <input type="text" class="search-input" data-target="inspection" placeholder="搜索检查编号、检查人员..." />
+                    <button class="btn-small search-btn" data-target="inspection">搜索</button>
+                    <button class="btn-small search-reset" data-target="inspection">重置</button>
+                </div>
+                <div class="data-table">
+                    <table>
+                        <thead><tr><th>检查编号</th><th>检查日期</th><th>检查人员</th><th>检查区域</th><th>隐患数量</th><th>状态</th><th>操作</th></tr></thead>
+                        <tbody id="inspection-table-body"></tbody>
+                    </table>
+                </div>
+                <div id="inspection-edit-form" class="edit-form">
+                    <h3>编辑检查记录</h3>
+                    <div class="form-row">
+                        <div class="form-col"><label>检查编号</label><input type="text" id="edit-inspection-id" readonly /></div>
+                        <div class="form-col"><label>检查日期</label><input type="date" id="edit-inspection-date" /></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col"><label>检查人员</label><input type="text" id="edit-inspection-staff" /></div>
+                        <div class="form-col">
+                            <label>检查区域</label>
+                            <select id="edit-inspection-area">
+                                <option value="高温机房">高温机房</option><option value="低温机房">低温机房</option>
+                                <option value="高压配电箱">高压配电箱</option><option value="1号冻库">1号冻库</option>
+                                <option value="2号冻库">2号冻库</option><option value="3号冻库">3号冻库</option>
+                                <option value="4号冻库">4号冻库</option><option value="1号仓库">1号仓库</option>
+                                <option value="2号仓库">2号仓库</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col"><label>隐患数量</label><input type="number" id="edit-inspection-hazards" /></div>
+                    </div>
+                    <button id="save-inspection-btn">保存更改</button>
+                    <button id="cancel-inspection-btn" class="btn-danger">取消</button>
+                </div>
+                <div style="margin-top:15px;">
+                    <h3>新增检查记录</h3>
+                    <div class="form-row">
+                        <div class="form-col"><label>检查编号</label><input type="text" id="new-inspection-id" placeholder="请输入检查编号" /></div>
+                        <div class="form-col"><label>检查日期</label><input type="date" id="new-inspection-date" /></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col"><label>检查人员</label><input type="text" id="new-inspection-staff" placeholder="请输入检查人员" /></div>
+                        <div class="form-col">
+                            <label>检查区域</label>
+                            <select id="new-inspection-area">
+                                <option value="高温机房">高温机房</option><option value="低温机房">低温机房</option>
+                                <option value="高压配电箱">高压配电箱</option><option value="1号冻库">1号冻库</option>
+                                <option value="2号冻库">2号冻库</option><option value="3号冻库">3号冻库</option>
+                                <option value="4号冻库">4号冻库</option><option value="1号仓库">1号仓库</option>
+                                <option value="2号仓库">2号仓库</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col"><label>隐患数量</label><input type="number" id="new-inspection-hazards" placeholder="请输入隐患数量" /></div>
+                    </div>
+                    <button id="add-inspection-btn" class="btn-success">添加记录</button>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 面板：全年生产预算 -->
+            <!-- ========================================================== -->
+            <div id="budget-panel" class="panel">
+                <h2 class="panel-title">📊 全年生产预算</h2>
+                <div class="budget-summary">
+                    <div class="info-card budget" style="border-left:5px solid #1e8449;">
+                        <div class="card-icon" style="background:#e8f5e9;color:#1e8449;">📊</div>
+                        <div class="card-content"><div class="card-title">总预算</div><div class="card-value" id="budget-total-summary">¥0</div></div>
+                    </div>
+                    <div class="info-card" style="border-left:5px solid #2980b9;">
+                        <div class="card-icon" style="background:#e3f2fd;color:#2980b9;">📌</div>
+                        <div class="card-content"><div class="card-title">已分配类别</div><div class="card-value" id="budget-category-count">0</div></div>
+                    </div>
+                    <div class="info-card" style="border-left:5px solid #8e44ad;">
+                        <div class="card-icon" style="background:#f3e5f5;color:#8e44ad;">📈</div>
+                        <div class="card-content"><div class="card-title">平均预算/类</div><div class="card-value" id="budget-avg-per-category">¥0</div></div>
+                    </div>
+                </div>
+                <div style="background:#fafcfe;border-radius:12px;padding:15px;margin-bottom:20px;border:1px solid #eef2f7;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+                        <span style="font-weight:700;color:#1e3c72;font-size:16px;">📈 预算构成比例</span>
+                        <span style="font-size:13px;color:#888;">总预算：<strong id="chart-total-label">¥0</strong></span>
+                    </div>
+                    <div class="chart-container"><canvas id="budgetChart"></canvas></div>
+                    <div class="budget-legend" id="budget-legend"></div>
+                </div>
+                <div style="margin-top:15px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+                        <h3 style="font-size:16px;color:#1e3c72;">预算明细</h3>
+                        <span style="font-size:13px;color:#888;">共 <span id="budget-table-count">0</span> 项</span>
+                    </div>
+                    <div class="data-table">
+                        <table>
+                            <thead><tr><th>类别</th><th>预算金额 (¥)</th><th>实际支出 (¥)</th><th>执行率</th><th>备注</th><th>操作</th></tr></thead>
+                            <tbody id="budget-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="budget-edit-form" class="edit-form">
+                    <h3>编辑预算项</h3>
+                    <div class="form-row">
+                        <div class="form-col"><label>类别</label><input type="text" id="edit-budget-category" /></div>
+                        <div class="form-col"><label>预算金额 (¥)</label><input type="number" id="edit-budget-amount" step="0.01" /></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col"><label>实际支出 (¥)</label><input type="number" id="edit-budget-actual" step="0.01" value="0" /></div>
+                        <div class="form-col"><label>备注</label><input type="text" id="edit-budget-note" placeholder="可选" /></div>
+                    </div>
+                    <button id="save-budget-btn">保存更改</button>
+                    <button id="cancel-budget-btn" class="btn-danger">取消</button>
+                </div>
+                <div style="margin-top:20px;border-top:1px solid #eee;padding-top:18px;">
+                    <h3 style="font-size:16px;color:#1e3c72;margin-bottom:10px;">➕ 新增预算项</h3>
+                    <div class="form-row">
+                        <div class="form-col"><label>类别</label><input type="text" id="new-budget-category" placeholder="如：设备维护" /></div>
+                        <div class="form-col"><label>预算金额 (¥)</label><input type="number" id="new-budget-amount" step="0.01" placeholder="请输入金额" /></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col"><label>实际支出 (¥)</label><input type="number" id="new-budget-actual" step="0.01" value="0" placeholder="实际支出" /></div>
+                        <div class="form-col"><label>备注</label><input type="text" id="new-budget-note" placeholder="可选备注" /></div>
+                    </div>
+                    <button id="add-budget-btn" class="btn-success">添加预算项</button>
+                </div>
+            </div>
+
+            <!-- 底部 -->
+            <footer>
+                <p>青白江冷链信息管理平台 © 2026 &nbsp; 版权所有 &nbsp; 技术支持：制冷班</p>
+            </footer>
+
+        </div>
+    </div>
+
+    <!-- 存储状态 -->
+    <div class="storage-info" id="storage-info">数据存储状态 <span id="storage-status">正在加载...</span></div>
+
+    <!-- ========================================================== -->
+    <!-- JavaScript （优化后） -->
+    <!-- ========================================================== -->
+    <script>
+        // ================================================================
+        //  1. 配置 & 常量
+        // ================================================================
+        const STORAGE_KEYS = {
+            equipment: 'coldChainEquipmentData',
+            personnel: 'coldChainPersonnelData',
+            contract: 'coldChainContractData',
+            inspection: 'coldChainInspectionData',
+            budget: 'coldChainBudgetData'
+        };
+
+        const DEFAULT_DATA = {
+            equipment: [
+                { id: 1, code: 'ZB-SB-2023001', name: '制冷机组A', type: '制冷设备', date: '2024-03-15' },
+                { id: 2, code: 'ZB-SB-2023002', name: '冷藏库门B', type: '保温设备', date: '2024-01-20' },
+                { id: 3, code: 'ZB-SB-2023003', name: '冷风机C', type: '通风设备', date: '2023-11-30' },
+                { id: 4, code: 'ZB-SB-2023004', name: '压缩机D', type: '制冷设备', date: '2024-05-10' }
+            ],
+            personnel: [
+                { id: 1, name: '张三', job: '制冷与空调设备运行操作作业', cert: 'RZ-2023001', date: '2025-03-15' },
+                { id: 2, name: '李四', job: '制冷与空调设备安装维修操作作业', cert: 'FC-2023002', date: '2024-01-20' },
+                { id: 3, name: '王五', job: '低压电工证', cert: 'DG-2023003', date: '2023-11-30' },
+                { id: 4, name: '赵六', job: '制冷与空调设备运行操作作业', cert: 'RZ-2023004', date: '2024-06-10' }
+            ],
+            contract: [
+                { id: 1, code: 'HT-2023-001', client: '成都冷链物流有限公司', type: '设备维护', amount: '¥120,000',
+                date: '2023-01-15' },
+                { id: 2, code: 'HT-2023-002', client: '四川食品集团', type: '设备租赁', amount: '¥80,000',
+                date: '2023-02-20' },
+                { id: 3, code: 'HT-2023-003', client: '西南冷链配送中心', type: '技术服务', amount: '¥150,000',
+                    date: '2023-03-10' },
+                { id: 4, code: 'HT-2023-004', client: '青白江农业合作社', type: '购买设备', amount: '¥200,000',
+                    date: '2023-04-05' }
+            ],
+            inspection: [
+                { id: 1, code: 'JC-2023-001', date: '2023-12-01', staff: '安全部-李工', area: 'A区冷藏库', hazards: 2 },
+                { id: 2, code: 'JC-2023-002', date: '2023-12-05', staff: '安全部-王工', area: 'B区制冷间', hazards: 1 },
+                { id: 3, code: 'JC-2023-003', date: '2023-12-10', staff: '安全部-张工', area: 'C区配电室', hazards: 3 },
+                { id: 4, code: 'JC-2023-004', date: '2023-12-15', staff: '安全部-刘工', area: 'D区设备间', hazards: 0 }
+            ],
+            budget: [
+                { id: 1, category: '制冷设备维护', amount: 500000, actual: 320000, note: '年度维护计划' },
+                { id: 2, category: '能源消耗（电费）', amount: 300000, actual: 280000, note: '全年电费预算' },
+                { id: 3, category: '人员工资', amount: 800000, actual: 750000, note: '全年工资预算' },
+                { id: 4, category: '物流运输', amount: 200000, actual: 150000, note: '冷链运输费用' },
+                { id: 5, category: '原材料采购', amount: 400000, actual: 380000, note: '包装材料等' },
+                { id: 6, category: '安全培训', amount: 100000, actual: 60000, note: '年度培训计划' },
+                { id: 7, category: '其他费用', amount: 150000, actual: 120000, note: '杂项支出' }
+            ]
+        };
+
+        const STATUS_MAP = {
+            equipment: (date) => {
+                const d = new Date(date);
+                const now = new Date();
+                if (d < now) return '已过期';
+                const diff = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+                return diff <= 30 ? '即将到期' : '正常';
+            },
+            personnel: (date) => {
+                const d = new Date(date);
+                const now = new Date();
+                if (d < now) return '已过期';
+                const diff = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+                return diff <= 30 ? '即将到期' : '正常';
+            },
+            contract: (date) => {
+                const d = new Date(date);
+                const now = new Date();
+                if (d < now) return '已到期';
+                const diff = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+                return diff <= 30 ? '即将到期' : '执行中';
+            },
+            inspection: (hazards) => {
+                if (hazards === 0) return '合格';
+                return hazards <= 2 ? '已完成' : '整改中';
+            }
+        };
+
+        // ================================================================
+        //  2. 工具函数
+        // ================================================================
+        const $ = (sel) => document.querySelector(sel);
+        const $$ = (sel) => document.querySelectorAll(sel);
+
+        function formatCurrency(val) {
+            if (val === undefined || val === null) return '¥0';
+            return '¥' + Number(val).toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+
+        function formatCurrencyFull(val) {
+            if (val === undefined || val === null) return '¥0.00';
+            return '¥' + Number(val).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function getStatusClass(status) {
+            if (!status) return '';
+            if (['正常', '执行中', '已完成', '合格'].includes(status)) return 'status-active';
+            if (['即将到期', '整改中'].includes(status)) return 'status-expiring';
+            if (['已过期', '已到期'].includes(status)) return 'status-overdue';
+            return '';
+        }
+
+        function today() { return new Date(); }
+
+        function parseDate(dateStr) { return new Date(dateStr); }
+
+        function daysUntil(dateStr) {
+            const d = parseDate(dateStr);
+            const now = today();
+            return Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+        }
+
+        // ================================================================
+        //  3. 数据管理
+        // ================================================================
+        class DataStore {
+            constructor() {
+                this.data = {};
+                this.loadAll();
+            }
+
+            loadAll() {
+                for (const [key, defaultValue] of Object.entries(DEFAULT_DATA)) {
+                    const stored = localStorage.getItem(STORAGE_KEYS[key]);
+                    if (stored) {
+                        try { this.data[key] = JSON.parse(stored); } catch { this.data[key] = defaultValue; }
+                    } else {
+                        this.data[key] = JSON.parse(JSON.stringify(defaultValue));
+                    }
+                    // 确保每条记录都有 status 字段（兼容旧数据）
+                    if (key === 'equipment' || key === 'personnel' || key === 'contract') {
+                        this.data[key] = this.data[key].map(item => ({
+                            ...item,
+                            status: item.status || STATUS_MAP[key](item.date)
+                        }));
+                    }
+                    if (key === 'inspection') {
+                        this.data[key] = this.data[key].map(item => ({
+                            ...item,
+                            status: item.status || STATUS_MAP.inspection(item.hazards)
+                        }));
+                    }
+                }
+                document.getElementById('storage-status').textContent = '数据已加载';
+            }
+
+            saveAll() {
+                try {
+                    for (const key of Object.keys(STORAGE_KEYS)) {
+                        localStorage.setItem(STORAGE_KEYS[key], JSON.stringify(this.data[key]));
+                    }
+                    document.getElementById('storage-status').textContent = '数据已保存';
+                } catch (e) {
+                    console.error('保存失败', e);
+                    document.getElementById('storage-status').textContent = '保存失败';
+                }
+            }
+
+            get(key) { return this.data[key] || []; }
+
+            set(key, value) { this.data[key] = value; }
+
+            // 通用：新增
+            add(key, item) {
+                const arr = this.get(key);
+                const maxId = arr.reduce((max, d) => Math.max(max, d.id || 0), 0);
+                const newItem = { ...item, id: maxId + 1 };
+                if (key === 'equipment' || key === 'personnel' || key === 'contract') {
+                    newItem.status = STATUS_MAP[key](newItem.date);
+                }
+                if (key === 'inspection') {
+                    newItem.status = STATUS_MAP.inspection(newItem.hazards);
+                }
+                arr.push(newItem);
+                this.saveAll();
+                return newItem;
+            }
+
+            // 通用：更新
+            update(key, id, updates) {
+                const arr = this.get(key);
+                const idx = arr.findIndex(d => d.id === id);
+                if (idx === -1) return null;
+                const updated = { ...arr[idx], ...updates };
+                if (key === 'equipment' || key === 'personnel' || key === 'contract') {
+                    if (updated.date) updated.status = STATUS_MAP[key](updated.date);
+                }
+                if (key === 'inspection') {
+                    if (updated.hazards !== undefined) updated.status = STATUS_MAP.inspection(updated.hazards);
+                }
+                arr[idx] = updated;
+                this.saveAll();
+                return updated;
+            }
+
+            // 通用：删除
+            delete(key, id) {
+                const arr = this.get(key);
+                const filtered = arr.filter(d => d.id !== id);
+                this.set(key, filtered);
+                this.saveAll();
+                return filtered;
+            }
+
+            // 通用：搜索
+            search(key, term, fields) {
+                if (!term) return this.get(key);
+                const lower = term.toLowerCase();
+                return this.get(key).filter(item =>
+                    fields.some(f => String(item[f] || '').toLowerCase().includes(lower))
+                );
+            }
+        }
+
+        // ================================================================
+        //  4. 表格渲染器
+        // ================================================================
+        class TableRenderer {
+            constructor(store) {
+                this.store = store;
+                this.chartInstance = null;
+            }
+
+            // 渲染所有表格
+            renderAll() {
+                this.renderEquipment();
+                this.renderPersonnel();
+                this.renderContract();
+                this.renderInspection();
+                this.renderBudget();
+                this.updateDashboard();
+                this.updateBudgetSummary();
+                // 延迟绘制图表
+                setTimeout(() => this.renderBudgetChart(), 150);
+            }
+
+            // ----- 设备表格 -----
+            renderEquipment(data) {
+                const tbody = $('#equipment-table-body');
+                const source = data || this.store.get('equipment');
+                tbody.innerHTML = source.map(item => `
+                    <tr data-id="${item.id}">
+                        <td>${item.code}</td>
+                        <td>${item.name}</td>
+                        <td>${item.type}</td>
+                        <td><span class="${getStatusClass(item.status)}">${item.status}</span></td>
+                        <td>${item.date}</td>
+                        <td class="action-buttons">
+                            <button class="btn-edit btn-small action-edit" data-key="equipment" data-id="${item.id}">编辑</button>
+                            <button class="btn-danger btn-small action-delete" data-key="equipment" data-id="${item.id}">删除</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            // ----- 人员表格 -----
+            renderPersonnel(data) {
+                const tbody = $('#personnel-table-body');
+                const source = data || this.store.get('personnel');
+                tbody.innerHTML = source.map(item => `
+                    <tr data-id="${item.id}">
+                        <td>${item.name}</td>
+                        <td>${item.job}</td>
+                        <td>${item.cert}</td>
+                        <td>${item.date}</td>
+                        <td><span class="${getStatusClass(item.status)}">${item.status}</span></td>
+                        <td class="action-buttons">
+                            <button class="btn-edit btn-small action-edit" data-key="personnel" data-id="${item.id}">编辑</button>
+                            <button class="btn-danger btn-small action-delete" data-key="personnel" data-id="${item.id}">删除</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            // ----- 合同表格 -----
+            renderContract(data) {
+                const tbody = $('#contract-table-body');
+                const source = data || this.store.get('contract');
+                tbody.innerHTML = source.map(item => `
+                    <tr data-id="${item.id}">
+                        <td>${item.code}</td>
+                        <td>${item.client}</td>
+                        <td>${item.type}</td>
+                        <td>${item.amount}</td>
+                        <td>${item.date}</td>
+                        <td><span class="${getStatusClass(item.status)}">${item.status}</span></td>
+                        <td class="action-buttons">
+                            <button class="btn-edit btn-small action-edit" data-key="contract" data-id="${item.id}">编辑</button>
+                            <button class="btn-danger btn-small action-delete" data-key="contract" data-id="${item.id}">删除</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            // ----- 检查记录表格 -----
+            renderInspection(data) {
+                const tbody = $('#inspection-table-body');
+                const source = data || this.store.get('inspection');
+                tbody.innerHTML = source.map(item => `
+                    <tr data-id="${item.id}">
+                        <td>${item.code}</td>
+                        <td>${item.date}</td>
+                        <td>${item.staff}</td>
+                        <td>${item.area}</td>
+                        <td>${item.hazards}</td>
+                        <td><span class="${getStatusClass(item.status)}">${item.status}</span></td>
+                        <td class="action-buttons">
+                            <button class="btn-edit btn-small action-edit" data-key="inspection" data-id="${item.id}">编辑</button>
+                            <button class="btn-danger btn-small action-delete" data-key="inspection" data-id="${item.id}">删除</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            // ----- 预算表格 -----
+            renderBudget(data) {
+                const tbody = $('#budget-table-body');
+                const source = data || this.store.get('budget');
+                $('#budget-table-count').textContent = source.length;
+                if (!source.length) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#999;padding:30px;">暂无预算数据，请添加</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = source.map(item => {
+                    const amt = Number(item.amount) || 0;
+                    const act = Number(item.actual) || 0;
+                    const rate = amt > 0 ? Math.min((act / amt) * 100, 100) : 0;
+                    const color = rate > 90 ? '#27ae60' : (rate > 60 ? '#f39c12' : '#e74c3c');
+                    return `
+                        <tr data-id="${item.id}">
+                            <td><strong>${item.category}</strong></td>
+                            <td>${formatCurrencyFull(amt)}</td>
+                            <td>${formatCurrencyFull(act)}</td>
+                            <td style="color:${color};font-weight:700;">${rate.toFixed(1)}%</td>
+                            <td>${item.note || ''}</td>
+                            <td class="action-buttons">
+                                <button class="btn-edit btn-small action-edit" data-key="budget" data-id="${item.id}">编辑</button>
+                                <button class="btn-danger btn-small action-delete" data-key="budget" data-id="${item.id}">删除</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                this.updateBudgetSummary();
+                this.renderBudgetChart();
+            }
+
+            // ----- 预算饼图 -----
+            renderBudgetChart() {
+                const canvas = document.getElementById('budgetChart');
+                if (!canvas) return;
+                if (this.chartInstance) { this.chartInstance.destroy();
+                    this.chartInstance = null; }
+
+                const data = this.store.get('budget');
+                if (!data.length) {
+                    canvas.parentElement.innerHTML =
+                        `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:16px;">暂无预算数据，请添加预算项</div>`;
+                    $('#budget-legend').innerHTML = '';
+                    return;
+                }
+
+                const labels = data.map(d => d.category);
+                const amounts = data.map(d => Number(d.amount) || 0);
+                const total = amounts.reduce((a, b) => a + b, 0);
+                const colors = ['#1e3c72', '#2a5298', '#3498db', '#5dade2', '#27ae60', '#2ecc71', '#f39c12', '#e67e22',
+                    '#e74c3c', '#9b59b6', '#1abc9c', '#34495e'
+                ];
+
+                // 图例
+                const legend = $('#budget-legend');
+                legend.innerHTML = labels.map((label, i) => {
+                    const amt = amounts[i] || 0;
+                    const pct = total > 0 ? ((amt / total) * 100).toFixed(1) : 0;
+                    const color = colors[i % colors.length];
+                    return `<div class="budget-legend-item">
+                                <span class="budget-legend-color" style="background:${color};"></span>
+                                <span>${label} <strong>${formatCurrency(amt)}</strong> (${pct}%)</span>
+                            </div>`;
+                }).join('');
+
+                // 图表
+                const ctx = canvas.getContext('2d');
+                this.chartInstance = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: amounts,
+                            backgroundColor: colors.slice(0, labels.length),
+                            borderColor: '#fff',
+                            borderWidth: 2,
+                            hoverOffset: 12
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const val = context.parsed || 0;
+                                        const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                        return `${context.label}: ${formatCurrencyFull(val)} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        animation: { animateRotate: true, duration: 700 }
+                    }
+                });
+            }
+
+            // ----- 仪表盘卡片 -----
+            updateDashboard() {
+                const insp = this.store.get('inspection');
+                const hazardCount = insp.filter(i => i.hazards > 0).reduce((s, i) => s + i.hazards, 0);
+                $('#hazard-count').textContent = hazardCount + '项';
+                $('#hazard-badge').textContent = hazardCount + '项';
+
+                const personnel = this.store.get('personnel');
+                const expPers = personnel.filter(p => p.status === '即将到期').length;
+                $('#expiring-personnel-count').textContent = expPers + '人';
+                $('#expiring-personnel-badge').textContent = expPers + '人';
+
+                const equip = this.store.get('equipment');
+                const contracts = this.store.get('contract');
+                const warnCount =
+                    equip.filter(e => e.status === '即将到期').length +
+                    personnel.filter(p => p.status === '即将到期').length +
+                    contracts.filter(c => c.status === '即将到期').length;
+                $('#warning-count').textContent = warnCount + '项';
+                $('#warning-badge').textContent = warnCount + '项';
+
+                const totalBudget = this.store.get('budget').reduce((s, d) => s + Number(d.amount), 0);
+                $('#budget-total-card').textContent = formatCurrency(totalBudget);
+            }
+
+            // ----- 预算汇总卡片 -----
+            updateBudgetSummary() {
+                const data = this.store.get('budget');
+                const total = data.reduce((s, d) => s + Number(d.amount), 0);
+                const count = data.length;
+                const avg = count > 0 ? total / count : 0;
+                $('#budget-total-summary').textContent = formatCurrency(total);
+                $('#budget-category-count').textContent = count + ' 类';
+                $('#budget-avg-per-category').textContent = formatCurrency(avg);
+                $('#chart-total-label').textContent = formatCurrency(total);
+            }
+        }
+
+        // ================================================================
+        //  5. 应用主控制器
+        // ================================================================
+        class App {
+            constructor() {
+                this.store = new DataStore();
+                this.renderer = new TableRenderer(this.store);
+                this.currentSearch = { key: null, term: null };
+                this.init();
+            }
+
+            init() {
+                this.updateDate();
+                this.renderer.renderAll();
+                this.bindNavigation();
+                this.bindActions();
+                this.bindSearch();
+                this.bindForms();
+                window.addEventListener('beforeunload', () => this.store.saveAll());
+            }
+
+            updateDate() {
+                const now = new Date();
+                $('#current-date').textContent =
+                    `${now.getFullYear()}年${String(now.getMonth()+1).padStart(2,'0')}月${String(now.getDate()).padStart(2,'0')}日`;
+            }
+
+            // ----- 导航切换 -----
+            bindNavigation() {
+                $$('.nav-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        $$('.nav-item').forEach(n => n.classList.remove('active'));
+                        item.classList.add('active');
+                        const panel = item.dataset.panel;
+                        $$('.panel').forEach(p => p.classList.remove('active'));
+                        const target = document.getElementById(panel + '-panel');
+                        if (target) target.classList.add('active');
+                        if (panel === 'budget') {
+                            setTimeout(() => this.renderer.renderBudgetChart(), 200);
+                        }
+                    });
+                });
+            }
+
+            // ----- 操作按钮（编辑/删除）事件委托 -----
+            bindActions() {
+                // 编辑
+                document.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.action-edit');
+                    if (btn) {
+                        const key = btn.dataset.key;
+                        const id = parseInt(btn.dataset.id);
+                        this.openEditForm(key, id);
+                    }
+                });
+                // 删除
+                document.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.action-delete');
+                    if (btn) {
+                        const key = btn.dataset.key;
+                        const id = parseInt(btn.dataset.id);
+                        if (confirm('确定要删除吗？')) {
+                            this.store.delete(key, id);
+                            this.renderer.renderAll();
+                            this.renderer.updateDashboard();
+                        }
+                    }
+                });
+            }
+
+            // ----- 打开编辑表单 -----
+            openEditForm(key, id) {
+                const data = this.store.get(key);
+                const item = data.find(d => d.id === id);
+                if (!item) return;
+
+                const formMap = {
+                    equipment: {
+                        form: 'equipment-edit-form',
+                        idField: 'edit-equipment-id',
+                        nameField: 'edit-equipment-name',
+                        typeField: 'edit-equipment-type',
+                        dateField: 'edit-equipment-date',
+                        saveBtn: 'save-equipment-btn',
+                        cancelBtn: 'cancel-equipment-btn',
+                        fields: ['code', 'name', 'type', 'date']
+                    },
+                    personnel: {
+                        form: 'personnel-edit-form',
+                        idField: 'edit-personnel-name',
+                        nameField: 'edit-personnel-name',
+                        typeField: 'edit-personnel-job',
+                        dateField: 'edit-personnel-date',
+                        saveBtn: 'save-personnel-btn',
+                        cancelBtn: 'cancel-personnel-btn',
+                        fields: ['name', 'job', 'cert', 'date'],
+                        extra: { cert: 'edit-personnel-cert' }
+                    },
+                    contract: {
+                        form: 'contract-edit-form',
+                        idField: 'edit-contract-id',
+                        nameField: 'edit-contract-client',
+                        typeField: 'edit-contract-type',
+                        dateField: 'edit-contract-date',
+                        saveBtn: 'save-contract-btn',
+                        cancelBtn: 'cancel-contract-btn',
+                        fields: ['code', 'client', 'type', 'amount', 'date']
+                    },
+                    inspection: {
+                        form: 'inspection-edit-form',
+                        idField: 'edit-inspection-id',
+                        nameField: 'edit-inspection-staff',
+                        typeField: 'edit-inspection-area',
+                        dateField: 'edit-inspection-date',
+                        saveBtn: 'save-inspection-btn',
+                        cancelBtn: 'cancel-inspection-btn',
+                        fields: ['code', 'date', 'staff', 'area', 'hazards']
+                    },
+                    budget: {
+                        form: 'budget-edit-form',
+                        saveBtn: 'save-budget-btn',
+                        cancelBtn: 'cancel-budget-btn',
+                        fields: ['category', 'amount', 'actual', 'note']
+                    }
+                };
+
+                const cfg = formMap[key];
+                if (!cfg) return;
+
+                // 填充表单
+                for (const f of cfg.fields) {
+                    const el = document.getElementById(`edit-${key}-${f}`);
+                    if (el) el.value = item[f] !== undefined ? item[f] : '';
+                }
+                // 特殊处理
+                if (key === 'personnel') {
+                    const certEl = document.getElementById('edit-personnel-cert');
+                    if (certEl) certEl.value = item.cert || '';
+                }
+
+                // 显示表单
+                const formEl = document.getElementById(cfg.form);
+                if (formEl) formEl.classList.add('active');
+
+                // 保存按钮绑定
+                const saveBtn = document.getElementById(cfg.saveBtn);
+                if (saveBtn) {
+                    saveBtn.dataset.key = key;
+                    saveBtn.dataset.id = id;
+                    // 移除旧监听，使用新监听
+                    const newSave = saveBtn.cloneNode(true);
+                    saveBtn.parentNode.replaceChild(newSave, saveBtn);
+                    newSave.addEventListener('click', () => this.saveEdit(key, id));
+                }
+
+                // 取消按钮绑定
+                const cancelBtn = document.getElementById(cfg.cancelBtn);
+                if (cancelBtn) {
+                    const newCancel = cancelBtn.cloneNode(true);
+                    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+                    newCancel.addEventListener('click', () => {
+                        const formEl2 = document.getElementById(cfg.form);
+                        if (formEl2) formEl2.classList.remove('active');
+                    });
+                }
+            }
+
+            // ----- 保存编辑 -----
+            saveEdit(key, id) {
+                const cfg = {
+                    equipment: { fields: ['name', 'type', 'date'] },
+                    personnel: { fields: ['name', 'job', 'cert', 'date'] },
+                    contract: { fields: ['client', 'type', 'amount', 'date'] },
+                    inspection: { fields: ['date', 'staff', 'area', 'hazards'] },
+                    budget: { fields: ['category', 'amount', 'actual', 'note'] }
+                } [key];
+
+                if (!cfg) return;
+
+                const updates = {};
+                let valid = true;
+                for (const f of cfg.fields) {
+                    const el = document.getElementById(`edit-${key}-${f}`);
+                    if (el) {
+                        const val = el.type === 'number' ? parseFloat(el.value) : el.value.trim();
+                        if (f === 'amount' || f === 'actual') {
+                            updates[f] = isNaN(val) ? 0 : val;
+                        } else {
+                            updates[f] = val;
+                        }
+                        // 简单验证
+                        if (f === 'name' || f === 'client' || f === 'staff' || f === 'category') {
+                            if (!val) { alert(`请填写${el.labels?.[0]?.textContent || f}`); valid = false; }
+                        }
+                        if (f === 'date' && !val) { alert('请填写日期'); valid = false; }
+                        if (f === 'amount' && (isNaN(val) || val <= 0)) { alert('请填写有效金额'); valid = false; }
+                    }
+                }
+
+                if (!valid) return;
+
+                // 合同金额特殊处理：保留¥符号
+                if (key === 'contract' && updates.amount) {
+                    const num = parseFloat(String(updates.amount).replace(/[¥,]/g, ''));
+                    if (!isNaN(num)) updates.amount = '¥' + num.toLocaleString();
+                }
+
+                this.store.update(key, id, updates);
+                this.renderer.renderAll();
+                this.renderer.updateDashboard();
+
+                const formEl = document.getElementById(`${key}-edit-form`);
+                if (formEl) formEl.classList.remove('active');
+                alert('保存成功！');
+            }
+
+            // ----- 搜索 -----
+            bindSearch() {
+                document.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.search-btn');
+                    if (btn) {
+                        const target = btn.dataset.target;
+                        const input = document.querySelector(`.search-input[data-target="${target}"]`);
+                        if (input) {
+                            const term = input.value.trim();
+                            this.currentSearch = { key: target, term };
+                            this.doSearch(target, term);
+                        }
+                    }
+                });
+
+                document.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.search-reset');
+                    if (btn) {
+                        const target = btn.dataset.target;
+                        const input = document.querySelector(`.search-input[data-target="${target}"]`);
+                        if (input) input.value = '';
+                        this.currentSearch = { key: target, term: '' };
+                        this.doSearch(target, '');
+                    }
+                });
+
+                // 回车搜索
+                document.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        const input = e.target.closest('.search-input');
+                        if (input) {
+                            const target = input.dataset.target;
+                            const term = input.value.trim();
+                            this.currentSearch = { key: target, term };
+                            this.doSearch(target, term);
+                        }
+                    }
+                });
+            }
+
+            doSearch(key, term) {
+                const fieldMap = {
+                    equipment: ['code', 'name'],
+                    personnel: ['name', 'cert'],
+                    contract: ['code', 'client'],
+                    inspection: ['code', 'staff'],
+                    budget: ['category']
+                };
+                const fields = fieldMap[key] || [];
+                const data = this.store.search(key, term, fields);
+                const renderMap = {
+                    equipment: () => this.renderer.renderEquipment(data),
+                    personnel: () => this.renderer.renderPersonnel(data),
+                    contract: () => this.renderer.renderContract(data),
+                    inspection: () => this.renderer.renderInspection(data),
+                    budget: () => this.renderer.renderBudget(data)
+                };
+                if (renderMap[key]) renderMap[key]();
+            }
+
+            // ----- 新增表单绑定 -----
+            bindForms() {
+                // 设备新增
+                $('#add-equipment-btn').addEventListener('click', () => {
+                    const code = $('#new-equipment-id').value.trim();
+                    const name = $('#new-equipment-name').value.trim();
+                    const type = $('#new-equipment-type').value;
+                    const date = $('#new-equipment-date').value;
+                    if (!code || !name || !date) { alert('请填写完整信息'); return; }
+                    if (this.store.get('equipment').some(d => d.code === code)) { alert('设备编号已存在'); return; }
+                    this.store.add('equipment', { code, name, type, date });
+                    this.renderer.renderAll();
+                    this.renderer.updateDashboard();
+                    ['new-equipment-id', 'new-equipment-name', 'new-equipment-date'].forEach(id => document.getElementById(id)
+                        .value = '');
+                    alert('设备已添加！');
+                });
+
+                // 人员新增
+                $('#add-personnel-btn').addEventListener('click', () => {
+                    const name = $('#new-personnel-name').value.trim();
+                    const job = $('#new-personnel-job').value;
+                    const cert = $('#new-personnel-cert').value.trim();
+                    const date = $('#new-personnel-date').value;
+                    if (!name || !cert || !date) { alert('请填写完整信息'); return; }
+                    if (this.store.get('personnel').some(d => d.cert === cert)) { alert('证件号已存在'); return; }
+                    this.store.add('personnel', { name, job, cert, date });
+                    this.renderer.renderAll();
+                    this.renderer.updateDashboard();
+                    ['new-personnel-name', 'new-personnel-cert', 'new-personnel-date'].forEach(id => document.getElementById(id)
+                        .value = '');
+                    alert('人员已添加！');
+                });
+
+                // 合同新增
+                $('#add-contract-btn').addEventListener('click', () => {
+                    const code = $('#new-contract-id').value.trim();
+                    const client = $('#new-contract-client').value.trim();
+                    const type = $('#new-contract-type').value;
+                    const amount = $('#new-contract-amount').value.trim();
+                    const date = $('#new-contract-date').value;
+                    if (!code || !client || !amount || !date) { alert('请填写完整信息'); return; }
+                    if (this.store.get('contract').some(d => d.code === code)) { alert('合同编号已存在'); return; }
+                    const num = parseFloat(String(amount).replace(/[¥,]/g, ''));
+                    const formatted = isNaN(num) ? amount : '¥' + num.toLocaleString();
+                    this.store.add('contract', { code, client, type, amount: formatted, date });
+                    this.renderer.renderAll();
+                    this.renderer.updateDashboard();
+                    ['new-contract-id', 'new-contract-client', 'new-contract-amount', 'new-contract-date'].forEach(id =>
+                        document.getElementById(id).value = '');
+                    alert('合同已添加！');
+                });
+
+                // 检查新增
+                $('#add-inspection-btn').addEventListener('click', () => {
+                    const code = $('#new-inspection-id').value.trim();
+                    const date = $('#new-inspection-date').value;
+                    const staff = $('#new-inspection-staff').value.trim();
+                    const area = $('#new-inspection-area').value;
+                    const hazards = parseInt($('#new-inspection-hazards').value) || 0;
+                    if (!code || !date || !staff) { alert('请填写完整信息'); return; }
+                    if (this.store.get('inspection').some(d => d.code === code)) { alert('检查编号已存在'); return; }
+                    this.store.add('inspection', { code, date, staff, area, hazards });
+                    this.renderer.renderAll();
+                    this.renderer.updateDashboard();
+                    ['new-inspection-id', 'new-inspection-date', 'new-inspection-staff', 'new-inspection-hazards']
+                    .forEach(id => document.getElementById(id).value = '');
+                    alert('检查记录已添加！');
+                });
+
+                // 预算新增
+                $('#add-budget-btn').addEventListener('click', () => {
+                    const category = $('#new-budget-category').value.trim();
+                    const amount = parseFloat($('#new-budget-amount').value);
+                    const actual = parseFloat($('#new-budget-actual').value) || 0;
+                    const note = $('#new-budget-note').value.trim();
+                    if (!category || isNaN(amount) || amount <= 0) { alert('请填写类别和有效预算金额'); return; }
+                    if (this.store.get('budget').some(d => d.category === category)) { alert('该类别已存在'); return; }
+                    this.store.add('budget', { category, amount, actual, note });
+                    this.renderer.renderAll();
+                    this.renderer.updateDashboard();
+                    ['new-budget-category', 'new-budget-amount', 'new-budget-actual', 'new-budget-note'].forEach(id =>
+                        document.getElementById(id).value = '');
+                    alert('预算项已添加！');
+                });
+            }
+        }
+
+        // ================================================================
+        //  6. 启动
+        // ================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            window.app = new App();
+        });
+    </script>
+
+</body>
+</html>
